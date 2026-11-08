@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block body %}
+<h1>Configuración de auditoría</h1>
+<p class="mute">Tablas de usuario encontradas en el diccionario de datos de PostgreSQL. Elija una para seleccionar columnas y eventos.</p>
+<div class="card scroll">
+<table>
+  <tr><th>Tabla</th><th>Auditoría</th><th class="c">Combinaciones columna×evento activas</th><th></th></tr>
+  {% for r in rows %}
+  <tr><td class="mono">{{ r.schema_name }}.{{ r.table_name }}</td>
+      <td>{% if r.registrada and r.is_active %}<span class="badge on">activa</span>
+          {% elif r.registrada %}<span class="badge off">desactivada</span>
+          {% else %}<span class="badge off">sin configurar</span>{% endif %}</td>
+      <td class="c">{{ r.configs if r.is_active else 0 }}</td>
+      <td><a href="{{ url_for('config_table', schema=r.schema_name, table=r.table_name) }}">Configurar</a></td></tr>
+  {% else %}
+  <tr><td colspan="4" class="mute">No hay tablas de usuario en esta base de datos.</td></tr>
+  {% endfor %}
+</table>
+</div>
+{% endblock %}

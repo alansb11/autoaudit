@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block body %}
+<h1>Historial de cambios</h1>
+<form method="get" class="card noprint">
+  <div class="grid">
+    <div><label>Buscar por</label>
+      <select name="modo" id="modo" onchange="syncModo()">
+        <option value="usuario" {{ 'selected' if f.modo == 'usuario' }}>Usuario</option>
+        <option value="columna" {{ 'selected' if f.modo == 'columna' }}>Columna específica</option>
+        <option value="fila" {{ 'selected' if f.modo == 'fila' }}>Fila (clave primaria)</option>
+      </select></div>
+    <div data-m="usuario"><label>Usuario de base de datos</label>
+      <input name="usuario" list="usuarios" value="{{ f.usuario }}" style="width:100%">
+      <datalist id="usuarios">{% for u in users %}<option value="{{ u }}">{% endfor %}</datalist></div>
+    <div data-m="columna fila"><label>Esquema</label><input name="esquema" value="{{ f.esquema }}" style="width:100%"></div>
+    <div data-m="columna fila"><label>Tabla</label><input name="tabla" value="{{ f.tabla }}" style="width:100%"></div>
+    <div data-m="columna"><label>Columna</label><input name="columna" value="{{ f.columna }}" style="width:100%"></div>
+    <div data-m="fila"><label>Clave primaria (JSON)</label><input name="pk" value="{{ f.pk }}" placeholder='{"id": 1}' style="width:100%"></div>
+    <div><label>Desde</label><input type="date" name="desde" value="{{ f.desde }}" style="width:100%"></div>
+    <div><label>Hasta</label><input type="date" name="hasta" value="{{ f.hasta }}" style="width:100%"></div>
+    <div><label>Límite (vacío = todos)</label><input name="limite" value="{{ f.limite }}" inputmode="numeric" style="width:100%"></div>
+    <div><label>Orden</label>
+      <select name="orden">
+        <option value="desc" {{ 'selected' if f.orden != 'asc' }}>Más reciente primero</option>
+        <option value="asc" {{ 'selected' if f.orden == 'asc' }}>Cronológico (antiguo primero)</option>
+      </select></div>
+  </div>
+  <div class="actions"><button type="submit" name="buscar" value="1">Buscar</button></div>
+</form>
+
+{% if searched %}
+<div class="card">
+  <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:.6rem" class="noprint">
+    <b>{{ rows|length }}{{ '+' if truncated }} resultado(s)</b>
+    <span>
+      <a class="btn sec" href="{{ url_for('history_export', fmt='csv') }}?{{ query }}">Exportar CSV</a>
+      <a class="btn sec" href="{{ url_for('history_export', fmt='json') }}?{{ query }}">Exportar JSON</a>
+      <button type="button" class="sec" onclick="window.print()">Imprimir</button>
+    </span>
+  </div>
+  {% if truncated %}<p class="mute">Se muestran las primeras {{ rows|length }} filas. La exportación incluye todas las que coincidan con el límite indicado.</p>{% endif %}
+  <div class="scroll"><table>
+    <tr><th>Fecha y hora</th><th>Operación</th><th>Usuario</th><th>Estación / IP</th><th>Tabla</th><th>Columna</th><th>PK</th><th>Valor anterior</th><th>Valor nuevo</th></tr>
+    {% for r in rows %}
+    <tr><td class="mono">{{ r.operation_ts.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+        <td>{{ r.operation }}</td><td>{{ r.db_username or '—' }}</td>
+        <td class="mono">{{ r.hostname or '' }}{{ ' ' if r.hostname and r.client_ip }}{{ r.client_ip or '' }}</td>
+        <td class="mono">{{ r.schema_name }}.{{ r.table_name }}</td><td class="mono">{{ r.column_name }}</td>
+        <td class="mono">{{ r.pk_values|val }}</td>
+        <td class="mono">{{ r.old_value|val }}</td><td class="mono">{{ r.new_value|val }}</td></tr>
+    {% else %}<tr><td colspan="9" class="mute">Sin resultados para esos filtros.</td></tr>
+    {% endfor %}
+  </table></div>
+</div>
+{% endif %}
+<script>
+function syncModo() {
+  const m = document.getElementById('modo').value;
+  document.querySelectorAll('[data-m]').forEach(d => d.style.display = d.dataset.m.split(' ').includes(m) ? '' : 'none');
+}
+syncModo();
+</script>
+{% endblock %}

@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block body %}
+<h1>Estado de los triggers</h1>
+<p class="mute">Compara <span class="mono">trigger_registry</span> contra lo que existe realmente en PostgreSQL (<span class="mono">pg_trigger</span>).</p>
+<div class="card scroll">
+<table>
+  <tr><th>Tabla</th><th>Evento</th><th>Trigger</th><th>Registro</th><th>En PostgreSQL</th><th>Sincronizado</th><th>Instalado</th><th>Último error</th></tr>
+  {% for r in rows %}
+  <tr><td class="mono">{{ r.schema_name }}.{{ r.table_name }}</td><td>{{ r.event_type }}</td>
+      <td class="mono">{{ r.trigger_name }}</td>
+      <td>{{ 'instalado' if r.registry_says_installed else 'no instalado' }}</td>
+      <td>{{ 'sí' if r.exists_in_postgres else 'no' }}</td>
+      <td><span class="badge {{ 'on' if r.in_sync else 'bad' }}">{{ 'sí' if r.in_sync else 'NO' }}</span></td>
+      <td>{{ r.installed_at.strftime('%Y-%m-%d %H:%M') if r.installed_at else '' }}</td>
+      <td class="mono">{{ r.last_error or '' }}</td></tr>
+  {% else %}<tr><td colspan="8" class="mute">Aún no hay triggers registrados.</td></tr>
+  {% endfor %}
+</table>
+</div>
+{% endblock %}

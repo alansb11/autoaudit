@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block body %}
+<div class="card" style="max-width:420px;margin:3rem auto">
+  <h1>AutoAudit</h1>
+  <p class="mute">Sistema de auditoría automatizado.<br>Inicie sesión con su usuario de PostgreSQL
+     (base de datos <b>{{ dbname }}</b>).</p>
+  <form method="post" action="{{ url_for('login') }}">
+    <div style="margin-bottom:.8rem"><label>Usuario</label><input name="user" required autofocus style="width:100%"></div>
+    <div style="margin-bottom:1rem"><label>Contraseña</label><input name="password" type="password" style="width:100%"></div>
+    <button type="submit">Entrar</button>
+  </form>
+</div>
+{% endblock %}

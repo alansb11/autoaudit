@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block body %}
+<h1>Inicio</h1>
+{% if log_estimate is not none %}
+<div class="card">Registros aproximados en la bitácora: <b>{{ '{:,}'.format(log_estimate) }}</b></div>
+{% endif %}
+{% if sess.is_admin %}
+<div class="card">
+  <h2 style="margin-top:0">Tablas con auditoría configurada</h2>
+  {% if tables %}
+  <div class="scroll"><table>
+    <tr><th>Tabla</th><th>Estado</th><th class="c">Columnas</th><th class="c">Triggers instalados</th><th></th></tr>
+    {% for t in tables %}
+    <tr><td class="mono">{{ t.schema_name }}.{{ t.table_name }}</td>
+        <td><span class="badge {{ 'on' if t.is_active else 'off' }}">{{ 'activa' if t.is_active else 'desactivada' }}</span></td>
+        <td class="c">{{ t.columnas }}</td><td class="c">{{ t.triggers }}</td>
+        <td><a href="{{ url_for('config_table', schema=t.schema_name, table=t.table_name) }}">Configurar</a></td></tr>
+    {% endfor %}
+  </table></div>
+  {% else %}<p class="mute">Aún no hay tablas auditadas.</p>{% endif %}
+  <div class="actions"><a class="btn" href="{{ url_for('config_list') }}">Configurar auditoría</a></div>
+</div>
+{% endif %}
+{% if sess.is_admin or sess.is_reader %}
+<div class="card"><a class="btn" href="{{ url_for('history') }}">Consultar historial de cambios</a></div>
+{% endif %}
+{% if not (sess.is_admin or sess.is_reader) %}
+<div class="card">Su usuario no tiene rol de AutoAudit. Pida que le asignen <span class="mono">autoaudit_reader</span>
+   (consultar) o <span class="mono">autoaudit_admin</span> (configurar).</div>
+{% endif %}
+{% endblock %}

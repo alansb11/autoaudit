@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}AutoAudit{% endblock %}</title>
+<style>
+  :root { --bg:#f5f7fa; --card:#fff; --ink:#1d2733; --mute:#6b7785; --line:#dde3ea; --brand:#1f4e79;
+          --ok:#e6f4ea; --okb:#2e7d32; --err:#fdecea; --errb:#c62828; --info:#e8f0fe; --infob:#1a56a8; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#14181d; --card:#1c222a; --ink:#e6ebf0; --mute:#97a3b0; --line:#303a46; --brand:#6fb1e8;
+            --ok:#1b3a24; --okb:#7bd389; --err:#43201e; --errb:#ff8a80; --info:#1b2a44; --infob:#8ab4f8; }
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.45 system-ui, "Segoe UI", sans-serif; }
+  header { display:flex; flex-wrap:wrap; align-items:center; gap:1.2rem; padding:.7rem 1.5rem;
+           background:var(--card); border-bottom:1px solid var(--line); }
+  header b { color:var(--brand); font-size:1.15rem; }
+  header nav { display:flex; gap:1rem; flex:1; }
+  header a { color:var(--ink); text-decoration:none; } header a:hover { color:var(--brand); }
+  header .who { color:var(--mute); font-size:.9rem; }
+  main { max-width:1200px; margin:1.5rem auto; padding:0 1.5rem; }
+  h1 { font-size:1.5rem; margin:.2rem 0 1rem; } h2 { font-size:1.1rem; margin:1.4rem 0 .6rem; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:1.1rem 1.3rem; margin-bottom:1.2rem; }
+  table { border-collapse:collapse; width:100%; font-size:.9rem; }
+  th, td { text-align:left; padding:.45rem .6rem; border-bottom:1px solid var(--line); vertical-align:top; }
+  th { color:var(--mute); font-weight:600; white-space:nowrap; }
+  td.c, th.c { text-align:center; }
+  .scroll { overflow-x:auto; }
+  .mono { font-family:ui-monospace, Consolas, monospace; font-size:.85rem; word-break:break-all; }
+  .mute { color:var(--mute); }
+  .badge { display:inline-block; padding:.05rem .55rem; border-radius:99px; font-size:.78rem; border:1px solid var(--line); }
+  .badge.on { background:var(--ok); color:var(--okb); border-color:var(--okb); }
+  .badge.off { color:var(--mute); } .badge.bad { background:var(--err); color:var(--errb); border-color:var(--errb); }
+  button, .btn { background:var(--brand); color:#fff; border:0; border-radius:7px; padding:.5rem 1rem; font:inherit;
+                 cursor:pointer; text-decoration:none; display:inline-block; }
+  @media (prefers-color-scheme: dark) { button, .btn { color:#0b1620; } }
+  button.sec, .btn.sec { background:transparent; color:var(--brand); border:1px solid var(--brand); }
+  button.danger { background:var(--errb); } button.link { background:none; color:var(--mute); padding:.2rem .5rem; }
+  input, select { font:inherit; padding:.42rem .55rem; border:1px solid var(--line); border-radius:7px;
+                  background:var(--bg); color:var(--ink); }
+  label { display:block; font-size:.82rem; color:var(--mute); margin-bottom:.2rem; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(170px, 1fr)); gap:.8rem 1rem; align-items:end; }
+  .flash { padding:.6rem .9rem; border-radius:8px; margin-bottom:.6rem; border:1px solid; }
+  .flash.ok { background:var(--ok); color:var(--okb); border-color:var(--okb); }
+  .flash.error { background:var(--err); color:var(--errb); border-color:var(--errb); }
+  .flash.info { background:var(--info); color:var(--infob); border-color:var(--infob); }
+  .actions { display:flex; gap:.7rem; flex-wrap:wrap; margin-top:1rem; }
+  @media print { header, .noprint { display:none; } body { background:#fff; color:#000; } }
+</style>
+</head>
+<body>
+{% if sess %}
+<header>
+  <b>AutoAudit</b>
+  <nav>
+    <a href="{{ url_for('index') }}">Inicio</a>
+    {% if sess.is_admin %}<a href="{{ url_for('config_list') }}">Configuración</a>
+    <a href="{{ url_for('triggers') }}">Triggers</a>{% endif %}
+    {% if sess.is_admin or sess.is_reader %}<a href="{{ url_for('history') }}">Historial</a>{% endif %}
+  </nav>
+  <span class="who">{{ sess.user }} · {{ 'administrador' if sess.is_admin else ('lector' if sess.is_reader else 'sin rol AutoAudit') }}</span>
+  <form method="post" action="{{ url_for('logout') }}" style="margin:0">
+    <input type="hidden" name="csrf" value="{{ sess.csrf }}"><button class="link" type="submit">Salir</button>
+  </form>
+</header>
+{% endif %}
+<main>
+  {% with msgs = get_flashed_messages(with_categories=true) %}
+    {% for cat, m in msgs %}<div class="flash {{ cat }}">{{ m }}</div>{% endfor %}
+  {% endwith %}
+  {% block body %}{% endblock %}
+</main>
+</body>
+</html>

@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block body %}
+<h1>Auditoría de <span class="mono">{{ schema }}.{{ table }}</span></h1>
+<p class="mute">Marque qué columnas se auditan y en qué eventos. Al guardar se validan contra el catálogo y se
+   instalan o eliminan los triggers necesarios (uno por evento).</p>
+<form method="post">
+  <input type="hidden" name="csrf" value="{{ sess.csrf }}">
+  <div class="card scroll">
+  <table>
+    <tr><th>Columna</th><th>Tipo</th>
+      {% for ev in events %}<th class="c">{{ ev }}<br><button type="button" class="link" onclick="toggleAll('{{ ev }}')">todos / ninguno</button></th>{% endfor %}</tr>
+    {% for c in cols %}
+    <tr><td class="mono">{{ c.column_name }}{% if c.is_pk %} <span class="badge">PK</span>{% endif %}</td>
+        <td class="mute">{{ c.data_type }}</td>
+      {% for ev in events %}
+        <td class="c"><input type="checkbox" name="chk" data-ev="{{ ev }}" value="{{ c.column_name }}|{{ ev }}"
+            {{ 'checked' if (c.column_name, ev) in enabled }}></td>
+      {% endfor %}</tr>
+    {% endfor %}
+  </table>
+  </div>
+  <div class="actions">
+    <button type="submit" name="action" value="save">Guardar y aplicar</button>
+    <button type="submit" name="action" value="disable" class="danger"
+            onclick="return confirm('¿Desactivar la auditoría de toda la tabla? La bitácora existente se conserva.')">Desactivar auditoría de la tabla</button>
+    <a class="btn sec" href="{{ url_for('config_list') }}">Volver</a>
+  </div>
+</form>
+
+<h2>Estado de los triggers</h2>
+<div class="card scroll">
+{% if status %}
+<table>
+  <tr><th>Evento</th><th>Trigger</th><th>Registro dice</th><th>Existe en PostgreSQL</th><th>Sincronizado</th><th>Último error</th></tr>
+  {% for s in status %}
+  <tr><td>{{ s.event_type }}</td><td class="mono">{{ s.trigger_name }}</td>
+      <td>{{ 'instalado' if s.registry_says_installed else 'no instalado' }}</td>
+      <td>{{ 'sí' if s.exists_in_postgres else 'no' }}</td>
+      <td><span class="badge {{ 'on' if s.in_sync else 'bad' }}">{{ 'sí' if s.in_sync else 'NO' }}</span></td>
+      <td class="mono">{{ s.last_error or '' }}</td></tr>
+  {% endfor %}
+</table>
+{% else %}<span class="mute">Todavía no hay triggers para esta tabla.</span>{% endif %}
+</div>
+<script>
+function toggleAll(ev) {
+  const boxes = document.querySelectorAll('input[data-ev="' + ev + '"]');
+  const allOn = Array.from(boxes).every(b => b.checked);
+  boxes.forEach(b => b.checked = !allOn);
+}
+</script>
+{% endblock %}
